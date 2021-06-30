@@ -41,7 +41,7 @@ func recursiveRead(forPath string, matcher *regexp.Regexp, outputCh chan *FileEn
 				}
 			}
 		} else if matcher.MatchString(e.Name()) {
-			log.Printf("DEBUG recursiveRead found %s in %s", e.Name(), forPath)
+			//log.Printf("DEBUG recursiveRead found %s in %s", e.Name(), forPath)
 			fullPath := path.Join(forPath, e.Name())
 			fileInfo, statErr := os.Stat(fullPath)
 			if statErr != nil {

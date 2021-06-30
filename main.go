@@ -25,31 +25,43 @@ func generateExcludeList(source *string) *[]string {
 
 func main() {
 	excludeListRawPtr := flag.String("exclude", "/Applications,/System,/dev", "comma-separated list of paths to exclude")
+	serverPtr := flag.String("server", "https://localhost:9000", "base URL of the server to send data to")
+	noSendPtr := flag.Bool("nosend", false, "if set don't try to upload anything")
+	startPathPtr := flag.String("start", "/System/Volumes/Data", "start recursive scan from this path")
 	flag.Parse()
 
 	excludeListPtr := generateExcludeList(excludeListRawPtr)
 
-	startPath := "/"
-
 	log.Printf("Exclude list is %v", *excludeListPtr)
 	matcher := regexp.MustCompile("(.*\\.prproj|.*\\.plproj|.*\\.aep$|.*\\.cpr)")
 	startTime := time.Now()
-	filesCh, errCh := AsyncScanner(&startPath, matcher, excludeListPtr)
+	filesCh, scanErrCh := AsyncScanner(startPathPtr, matcher, excludeListPtr)
+	sendErrCh := AsyncSender(filesCh, *serverPtr, *noSendPtr)
 
 	func() {
 		for {
 			select {
-			case file := <-filesCh:
-				if file == nil {
+			//case file := <-filesCh:
+			//	if file == nil {
+			//		endTime := time.Now()
+			//		runtime := endTime.Sub(startTime)
+			//		log.Printf("All done, run completed in %s", runtime.String())
+			//		return
+			//	}
+			//	log.Printf("Got %s of size %d", file.FullPath, file.Size())
+			case err := <-scanErrCh:
+				log.Print("ERROR: ", err)
+				return
+			case err := <-sendErrCh:
+				if err == nil {
 					endTime := time.Now()
 					runtime := endTime.Sub(startTime)
 					log.Printf("All done, run completed in %s", runtime.String())
 					return
+				} else {
+					log.Print("ERROR: ", err)
+					return
 				}
-				log.Printf("Got %s of size %d", file.FullPath, file.Size())
-			case err := <-errCh:
-				log.Print("ERROR: ", err)
-				return
 			}
 		}
 	}()
