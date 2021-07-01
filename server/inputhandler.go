@@ -7,6 +7,7 @@ import (
 	"github.com/olivere/elastic/v6"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 )
@@ -15,6 +16,13 @@ type InputHandler struct {
 	elasticSearchClient *elastic.Client
 	indexName           string
 	timeout             time.Duration
+}
+
+type IndexEntry struct {
+	common.DataPacket
+
+	Filename string
+	Tags     []string
 }
 
 func makeDocId(from *common.DataPacket) string {
@@ -34,6 +42,30 @@ func makeDocId(from *common.DataPacket) string {
 		return final
 	} else {
 		return maybeId
+	}
+}
+
+func makeIndexEntry(from *common.DataPacket) IndexEntry {
+	tagsToApply := []string{}
+
+	if strings.HasPrefix(from.Fullpath, "/Downloads/Internet Downloads") {
+		tagsToApply = append(tagsToApply, "InternetDownloads")
+	}
+
+	if strings.Contains(from.Fullpath, "Adobe Premiere Pro Auto-Save") {
+		tagsToApply = append(tagsToApply, "Autosave")
+	}
+	if strings.HasPrefix(from.Fullpath, "/Users/Shared/Adobe/Premiere Pro/14.0/Tutorial/") {
+		tagsToApply = append(tagsToApply, "Tutorials")
+	}
+	if strings.Contains(from.Fullpath, "Library/Preferences/Cubase 10/Project Templates/") {
+		tagsToApply = append(tagsToApply, "Templates")
+	}
+
+	return IndexEntry{
+		DataPacket: *from,
+		Filename:   path.Base(from.Fullpath),
+		Tags:       tagsToApply,
 	}
 }
 
@@ -76,7 +108,7 @@ func (h InputHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Index(h.indexName).
 		Type("ghost-project").
 		Id(makeDocId(&incomingData)).
-		BodyJson(incomingData).
+		BodyJson(makeIndexEntry(&incomingData)).
 		Do(ctx)
 
 	if sendErr != nil {
