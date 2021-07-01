@@ -5,23 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/guardian/ghost-project-finder/common"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"time"
 )
 
-type DataPacket struct {
-	Hostname string    `json:"hostname"`
-	Fullpath string    `json:"fullpath"`
-	Size     int64     `json:"size"`
-	Modtime  time.Time `json:"modtime"`
-}
-
 func SendFileEntry(rec *FileEntry, hostname string, destBaseUrl string) error {
-	toSend := DataPacket{
+	toSend := common.DataPacket{
 		Hostname: hostname,
 		Fullpath: rec.FullPath,
 		Size:     rec.Size(),
