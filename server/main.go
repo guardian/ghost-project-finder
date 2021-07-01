@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/olivere/elastic/config"
 	"github.com/olivere/elastic/v6"
 	"log"
@@ -10,6 +11,9 @@ import (
 )
 
 func main() {
+	disableSniffingPtr := flag.Bool("nosniff", false, "if set, disable connection sniffing. Useful if your Elasticsearch is in a Docker container")
+	flag.Parse()
+
 	esUrl := os.Getenv("ELASTICSEARCH_URL")
 	esInitialIndexName := os.Getenv("ELASTICSEARCH_INDEX")
 	esTimeoutString := os.Getenv("ELASTICSEARCH_TIMEOUT")
@@ -36,7 +40,7 @@ func main() {
 	}
 	log.Print(esConfig)
 	//sniffing is disabled for dev, because it breaks if you run ES in a docker container and the app outside one
-	esClient, connectionErr := elastic.NewClient(elastic.SetURL(esUrl), elastic.SetSniff(false))
+	esClient, connectionErr := elastic.NewClient(elastic.SetURL(esUrl), elastic.SetSniff(!*disableSniffingPtr))
 
 	if connectionErr != nil {
 		log.Fatalf("Could not connect to Elasticsearch at %s: %s", esUrl, connectionErr)
@@ -50,8 +54,8 @@ func main() {
 		indexName:           esIndexName,
 		timeout:             esTimeout,
 	}
-	http.Handle("/healthcheck", healthCheck)
-	http.Handle("/foundfile", inputHandler)
+	http.Handle("/ghost-projects/healthcheck", healthCheck)
+	http.Handle("/ghost-projects/foundfile", inputHandler)
 
 	log.Printf("Starting server on port 9000")
 	startServerErr := http.ListenAndServe(":9000", nil)
