@@ -1,0 +1,26 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.gu.ghost-project-finder</string>
+        <key>ProgramArguments</key>
+        <array>
+            <string>/usr/local/bin/ghost-project-finder</string>
+            <string>-exclude=/Volumes,/Applications</string>
+            <string>-start=/</string>
+            <string>-server=https://destination-server/ghost-projects</string>
+        </array>
+        <key>StartInterval</key>
+        <!-- 1200 seconds = 20 mins -->
+        <integer>1200</integer>
+
+        <key>StandardOutPath</key>
+        <string>/var/log/ghost-project-finder.log</string>
+        <key>StandardErrorPath</key>
+        <string>/var/log/ghost-project-finder.log</string>
+    </dict>
+</plist>
